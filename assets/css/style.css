@@ -640,3 +640,27 @@ html[lang="th"] .pill { letter-spacing: .02em; font-weight: 500; }
   .reserve__word { margin-bottom: 44px; }
   html[lang="th"] :is(.kicker, .chip, .label, .concept__motto, .concept__facts p, .reserve__hours, .menu__foot p) { font-size: .8rem; }
 }
+
+/* Stay with us (Smile Villa) */
+.nav__stay { display: inline-flex; align-items: center; gap: 6px; font-size: .72rem; letter-spacing: .26em; text-transform: uppercase; white-space: nowrap; padding: 6px 0; border-bottom: 1px solid currentColor; transition: color .3s, gap .4s var(--ease); }
+.nav__stay svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.6; transition: transform .4s var(--ease); }
+.nav__stay:hover { color: var(--accent); }
+.nav__stay:hover svg { transform: translate(2px, -2px); }
+.nav:not(.is-scrolled) .nav__stay { color: var(--cream); }
+.nav__links + .nav__stay { margin-left: clamp(4px, 1vw, 14px); }
+.drawer__stay { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 30px; padding: 18px 22px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--cream-2); }
+.drawer__stay span { display: grid; gap: 2px; }
+.drawer__stay small { font-size: .6rem; letter-spacing: .3em; text-transform: uppercase; color: var(--accent); }
+.drawer__stay strong { font: 400 1.5rem/1.2 var(--display); }
+.drawer__stay svg { width: 22px; height: 22px; fill: none; stroke: var(--accent); stroke-width: 1.4; flex: none; }
+html[lang="th"] .nav__stay { letter-spacing: .04em; font-size: .86rem; }
+html[lang="th"] .drawer__stay strong { font-weight: 300; }
+@media (max-width: 1380px) { .nav__links { gap: clamp(14px, 1.6vw, 28px); } .nav__links a, .nav__stay { letter-spacing: .2em; } }
+@media (max-width: 1180px) { .nav__langs { margin-right: 0; } .nav__stay, .nav__links + .nav__stay { margin-left: auto; } .nav__cta { margin-left: 18px; } }
+@media (max-width: 720px) { .nav__stay { display: none; } }
+@media (max-height: 700px) and (max-width: 720px) { .drawer nav a { font-size: 2rem; } .drawer__stay { margin-top: 18px; } }
+
+/* Drawer: never cut off on short or wide screens */
+.drawer { justify-content: safe center; overflow-y: auto; overscroll-behavior: contain; }
+.drawer > * { width: 100%; max-width: 560px; margin-left: auto; margin-right: auto; }
+.drawer nav a { font-size: clamp(2rem, min(10vw, 6.4vh), 3.4rem); }

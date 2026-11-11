@@ -4,7 +4,7 @@ window.I18N = {
   en: {
     skip: "Skip to content",
     "nav.story": "Story", "nav.menu": "Menu", "nav.signatures": "Signatures", "nav.events": "Events",
-    "nav.gallery": "Gallery", "nav.infos": "Infos", "nav.reserve": "Reserve",
+    "nav.gallery": "Gallery", "nav.infos": "Infos", "nav.reserve": "Reserve", "nav.stay": "Stay with us", "nav.stayKicker": "Smile Villa",
     "cta.book": "Book a table", "cta.menu": "Discover the menu",
     "hero.sub": "Restaurant & Beach Bar", "hero.since": "Est. 2000",
 
@@ -107,7 +107,7 @@ window.I18N = {
   ru: {
     skip: "Перейти к содержанию",
     "nav.story": "История", "nav.menu": "Меню", "nav.signatures": "Фирменное", "nav.events": "События",
-    "nav.gallery": "Галерея", "nav.infos": "Инфо", "nav.reserve": "Бронь",
+    "nav.gallery": "Галерея", "nav.infos": "Инфо", "nav.reserve": "Бронь", "nav.stay": "Проживание", "nav.stayKicker": "Smile Villa",
     "cta.book": "Забронировать стол", "cta.menu": "Смотреть меню",
     "hero.sub": "Ресторан и пляжный бар", "hero.since": "С 2000 года",
 
@@ -207,7 +207,7 @@ window.I18N = {
   th: {
     skip: "ข้ามไปยังเนื้อหา",
     "nav.story": "เรื่องราว", "nav.menu": "เมนู", "nav.signatures": "เมนูแนะนำ", "nav.events": "อีเวนต์",
-    "nav.gallery": "แกลเลอรี", "nav.infos": "ข้อมูล", "nav.reserve": "จองโต๊ะ",
+    "nav.gallery": "แกลเลอรี", "nav.infos": "ข้อมูล", "nav.reserve": "จองโต๊ะ", "nav.stay": "ที่พักกับเรา", "nav.stayKicker": "Smile Villa",
     "cta.book": "จองโต๊ะ", "cta.menu": "ดูเมนู",
     "hero.sub": "ร้านอาหารและบาร์ริมหาด", "hero.since": "ตั้งแต่ปี 2000",
 
