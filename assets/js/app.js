@@ -31,9 +31,19 @@
   };
 
   /* ---------- i18n ---------- */
-  let lang = store.get("smile.lang", null) || ((navigator.language || "en").toLowerCase().startsWith("fr") ? "fr" : "en");
+  const LANGS = ["en", "ru", "th"];
+  const guessLang = () => { const n = (navigator.language || "en").slice(0, 2).toLowerCase(); return LANGS.includes(n) ? n : "en"; };
+  let lang = store.get("smile.lang", null);
+  if (!LANGS.includes(lang)) lang = guessLang();
   const t = (k) => (window.I18N[lang] && window.I18N[lang][k]) ?? window.I18N.en[k] ?? k;
-  const locale = () => (lang === "fr" ? "fr-FR" : "en-GB");
+  const locale = () => ({ en: "en-GB", ru: "ru-RU", th: "th-TH-u-ca-gregory" }[lang]);
+  // Messages for the restaurant team are always in English.
+  const tEn = (k) => window.I18N.en[k] ?? k;
+  const guestsLabel = (n, l = lang) => {
+    if (l === "ru") { const a = n % 10, b = n % 100; return `${n} ${a === 1 && b !== 11 ? "гость" : a >= 2 && a <= 4 && (b < 12 || b > 14) ? "гостя" : "гостей"}`; }
+    if (l === "th") return `${n} ท่าน`;
+    return `${n} ${n > 1 ? "guests" : "guest"}`;
+  };
 
   function applyLang() {
     document.documentElement.lang = lang;
@@ -45,8 +55,8 @@
     renderMenu();
     renderBookings();
     updateLive();
-    $$("[data-whatsapp]").forEach((a) => { a.href = wa(t("wa.hello")); });
-    $$("[data-whatsapp-group]").forEach((a) => { a.href = wa(t("wa.group")); });
+    $$("[data-whatsapp]").forEach((a) => { a.href = wa(tEn("wa.hello")); });
+    $$("[data-whatsapp-group]").forEach((a) => { a.href = wa(tEn("wa.group")); });
     if (booking.dlg.open) booking.refresh();
   }
 
@@ -59,10 +69,10 @@
   const today = () => { const n = now(); return ymd(n.y, n.m, n.d); };
   const addDays = (s, k) => { const { y, m, d } = parse(s); const x = new Date(Date.UTC(y, m - 1, d + k)); return ymd(x.getUTCFullYear(), x.getUTCMonth() + 1, x.getUTCDate()); };
   const dow = (s) => { const { y, m, d } = parse(s); return new Date(Date.UTC(y, m - 1, d)).getUTCDay(); };
-  const fmtTime = (mins) => { const h = Math.floor(mins / 60) % 24, m = Math.round(mins % 60); return lang === "fr" ? `${h}h${pad(m)}` : `${pad(h)}:${pad(m)}`; };
-  const fmtDate = (s, o = { weekday: "long", day: "numeric", month: "long" }) => {
+  const fmtTime = (mins) => { const h = Math.floor(mins / 60) % 24, m = Math.round(mins % 60); return `${pad(h)}:${pad(m)}`; };
+  const fmtDate = (s, o = { weekday: "long", day: "numeric", month: "long" }, loc = locale()) => {
     const { y, m, d } = parse(s);
-    const r = new Intl.DateTimeFormat(locale(), { ...o, timeZone: "UTC" }).format(new Date(Date.UTC(y, m - 1, d)));
+    const r = new Intl.DateTimeFormat(loc, { ...o, timeZone: "UTC" }).format(new Date(Date.UTC(y, m - 1, d)));
     return r.charAt(0).toUpperCase() + r.slice(1);
   };
   function sunset(s) {
@@ -201,6 +211,17 @@
      MENU
      ========================================================= */
   const MENU = window.SMILE_MENU;
+  const chipSpy = new IntersectionObserver((entries) => {
+    entries.forEach((en) => {
+      if (!en.isIntersecting) return;
+      const id = en.target.id.slice(2);
+      $$(".chip").forEach((c) => {
+        const on = c.dataset.jump === id;
+        c.classList.toggle("is-active", on);
+        if (on) { const box = c.parentElement; box.scrollTo({ left: c.offsetLeft - box.offsetWidth / 2 + c.offsetWidth / 2, behavior: "smooth" }); }
+      });
+    });
+  }, { rootMargin: "-35% 0px -60% 0px" });
   let mode = "food", query = "";
   const norm = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
   const hl = (text) => {
@@ -232,6 +253,8 @@
       return `<section class="mcat" id="m-${s.id}" ${items.length ? "" : "hidden"}><h3 class="mcat__title">${esc(s.t)}</h3>${s.i ? `<p class="mcat__intro">${esc(s.i)}</p>` : ""}${prot}${rows}</section>`;
     }).join("");
     $(".menu__empty").hidden = count > 0;
+    chipSpy.disconnect();
+    $$(".mcat").forEach((el) => chipSpy.observe(el));
     if (window.ScrollTrigger) ScrollTrigger.refresh();
   }
   $$(".menu__mode").forEach((b) => b.addEventListener("click", () => { mode = b.dataset.mode; renderMenu(); }));
@@ -333,7 +356,7 @@
       $('[data-guests="1"]').disabled = st.guests >= CONFIG.maxGuests;
       const hint = $("[data-group-hint]");
       hint.hidden = st.guests < CONFIG.maxGuests;
-      hint.innerHTML = `${esc(t("bk.group"))} <a href="${wa(t("wa.group"))}" target="_blank" rel="noopener">WhatsApp</a>`;
+      hint.innerHTML = `${esc(t("bk.group"))} <a href="${wa(tEn("wa.group"))}" target="_blank" rel="noopener">WhatsApp</a>`;
       this.calendar();
       if (this.step === 2) this.renderSlots();
       if (this.step === 4) $("[data-review]").innerHTML = this.ticket(this.data());
@@ -362,7 +385,7 @@
 
     renderSlots() {
       const st = this.st, list = this.slots(st.date);
-      $("[data-summary-date]").textContent = `${fmtDate(st.date)} · ${st.guests} ${st.guests > 1 ? t("t.guestN") : t("t.guest1")}`;
+      $("[data-summary-date]").textContent = `${fmtDate(st.date)} · ${guestsLabel(st.guests)}`;
       if (!list.length) { $(".slots").innerHTML = `<p class="mute">${esc(t("bk.noSlots"))}</p>`; return; }
       const ss = sunset(st.date) - 45;
       const sunsetSlot = list.reduce((b, x) => (Math.abs(x - ss) < Math.abs(b - ss) ? x : b), list[0]);
@@ -395,15 +418,16 @@
     ticket(d, ref) {
       const rows = [];
       if (ref) rows.push([t("t.ref"), ref, "ref"]);
-      rows.push([t("t.date"), fmtDate(d.date)], [t("t.time"), fmtTime(d.time)], [t("t.guests"), `${d.guests} ${d.guests > 1 ? t("t.guestN") : t("t.guest1")}`], [t("t.seating"), t(d.zone === "beach" ? "z.beach" : "z.any")], [t("t.name"), d.name]);
+      rows.push([t("t.date"), fmtDate(d.date)], [t("t.time"), fmtTime(d.time)], [t("t.guests"), guestsLabel(d.guests)], [t("t.seating"), t(d.zone === "beach" ? "z.beach" : "z.any")], [t("t.name"), d.name]);
       if (d.occasion !== "none") rows.push([t("t.occasion"), t("o." + d.occasion)]);
       if (d.notes) rows.push([t("t.notes"), d.notes]);
       return `<dl>${rows.map(([k, v, c]) => `<div class="ticket__row"><dt>${esc(k)}</dt><dd class="${c || ""}">${esc(v)}</dd></div>`).join("")}</dl>`;
     },
     message(b) {
-      const lines = [t("wa.booking"), "", `${t("t.ref")}: ${b.ref}`, `${t("t.date")}: ${fmtDate(b.date)}`, `${t("t.time")}: ${fmtTime(b.time)}`, `${t("t.guests")}: ${b.guests}`, `${t("t.seating")}: ${t(b.zone === "beach" ? "z.beach" : "z.any")}`, `${t("t.name")}: ${b.name}`, `Tel: ${b.phone}`, `Email: ${b.email}`];
-      if (b.occasion !== "none") lines.push(`${t("t.occasion")}: ${t("o." + b.occasion)}`);
-      if (b.notes) lines.push(`${t("t.notes")}: ${b.notes}`);
+      const lines = [tEn("wa.booking"), "", `Reference: ${b.ref}`, `Date: ${fmtDate(b.date, undefined, "en-GB")}`, `Time: ${fmtTime(b.time)}`, `Guests: ${b.guests}`, `Seating: ${tEn(b.zone === "beach" ? "z.beach" : "z.any")}`, `Name: ${b.name}`, `Tel: ${b.phone}`, `Email: ${b.email}`];
+      if (b.occasion !== "none") lines.push(`Occasion: ${tEn("o." + b.occasion)}`);
+      if (b.notes) lines.push(`Requests: ${b.notes}`);
+      lines.push(`Guest language: ${String(b.lang).toUpperCase()}`);
       return lines.join("\n");
     },
     done(b) {
@@ -429,7 +453,7 @@
       const start = new Date(Date.UTC(y, m - 1, d, 0, b.time) - OFFSET), end = new Date(start.getTime() + 2 * 3600e3);
       const f = (x) => x.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
       const e = (s) => s.replace(/[\\,;]/g, (c) => "\\" + c).replace(/\n/g, "\\n");
-      const body = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Smile Bar//Booking//EN", "BEGIN:VEVENT", `UID:${b.ref}@smilebarphuket.com`, `DTSTAMP:${f(new Date())}`, `DTSTART:${f(start)}`, `DTEND:${f(end)}`, `SUMMARY:${e(`Smile Bar — ${b.guests} ${b.guests > 1 ? t("t.guestN") : t("t.guest1")}`)}`, `LOCATION:${e(CONFIG.address)}`, `DESCRIPTION:${e(`${t("t.ref")}: ${b.ref}\nTel: ${CONFIG.phoneDisplay}`)}`, "BEGIN:VALARM", "TRIGGER:-PT2H", "ACTION:DISPLAY", "DESCRIPTION:Smile Bar", "END:VALARM", "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+      const body = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Smile Bar//Booking//EN", "BEGIN:VEVENT", `UID:${b.ref}@smilebarphuket.com`, `DTSTAMP:${f(new Date())}`, `DTSTART:${f(start)}`, `DTEND:${f(end)}`, `SUMMARY:${e(`Smile Bar — ${guestsLabel(b.guests)}`)}`, `LOCATION:${e(CONFIG.address)}`, `DESCRIPTION:${e(`${t("t.ref")}: ${b.ref}\nTel: ${CONFIG.phoneDisplay}`)}`, "BEGIN:VALARM", "TRIGGER:-PT2H", "ACTION:DISPLAY", "DESCRIPTION:Smile Bar", "END:VALARM", "END:VEVENT", "END:VCALENDAR"].join("\r\n");
       const url = URL.createObjectURL(new Blob([body], { type: "text/calendar;charset=utf-8" }));
       const a = Object.assign(document.createElement("a"), { href: url, download: `smile-bar-${b.date}.ics` });
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -476,14 +500,14 @@
     const wrap = $(".mybookings"), td = today();
     const list = store.get("smile.bookings", []).filter((b) => b.date >= td).sort((a, b) => (a.date + pad(a.time)).localeCompare(b.date + pad(b.time)));
     wrap.hidden = !list.length;
-    $(".mybookings__list").innerHTML = list.map((b) => `<li class="mybooking"><strong>${esc(fmtDate(b.date))} · ${fmtTime(b.time)}</strong><span>${b.guests} ${b.guests > 1 ? t("t.guestN") : t("t.guest1")}</span><span class="ref">${esc(b.ref)}</span><button type="button" data-cancel="${esc(b.ref)}">${esc(t("res.cancel"))}</button></li>`).join("");
+    $(".mybookings__list").innerHTML = list.map((b) => `<li class="mybooking"><strong>${esc(fmtDate(b.date))} · ${fmtTime(b.time)}</strong><span>${guestsLabel(b.guests)}</span><span class="ref">${esc(b.ref)}</span><button type="button" data-cancel="${esc(b.ref)}">${esc(t("res.cancel"))}</button></li>`).join("");
   }
   $(".mybookings__list").addEventListener("click", (e) => {
     const btn = e.target.closest("[data-cancel]"); if (!btn) return;
     const all = store.get("smile.bookings", []), item = all.find((x) => x.ref === btn.dataset.cancel);
     store.set("smile.bookings", all.filter((x) => x.ref !== btn.dataset.cancel));
     renderBookings(); toast(t("res.cancelled"));
-    if (item) window.open(wa(`${t("wa.cancel")} ${item.ref} (${fmtDate(item.date)}, ${fmtTime(item.time)}).`), "_blank", "noopener");
+    if (item) window.open(wa(`${tEn("wa.cancel")} ${item.ref} (${fmtDate(item.date, undefined, "en-GB")}, ${fmtTime(item.time)}).`), "_blank", "noopener");
   });
 
   /* ---------- Boot ---------- */

@@ -12,7 +12,7 @@
   <link rel="icon" href="assets/img/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Poiret+One&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Noto+Sans+Thai:wght@300;400;500&family=Poiret+One&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/style.css">
   <script type="application/ld+json">
   {
@@ -57,7 +57,9 @@
         <span class="bar"></span>
         <button type="button" data-lang="en" aria-pressed="true">EN</button>
         <span class="sep">·</span>
-        <button type="button" data-lang="fr" aria-pressed="false">FR</button>
+        <button type="button" data-lang="ru" aria-pressed="false">RU</button>
+        <span class="sep">·</span>
+        <button type="button" data-lang="th" aria-pressed="false" lang="th">ไทย</button>
       </div>
       <nav class="nav__links" aria-label="Primary">
         <a href="#story" data-i18n="nav.story">Story</a>
@@ -86,7 +88,8 @@
       <button type="button" class="pill pill--accent" data-book data-i18n="cta.book">Book a table</button>
       <div class="drawer__langs">
         <button type="button" data-lang="en" aria-pressed="true">EN</button>
-        <button type="button" data-lang="fr" aria-pressed="false">FR</button>
+        <button type="button" data-lang="ru" aria-pressed="false">RU</button>
+        <button type="button" data-lang="th" aria-pressed="false" lang="th">ไทย</button>
       </div>
     </div>
   </div>
@@ -108,7 +111,12 @@
       <div class="hero__center">
         <h1 class="hero__logo"><img src="assets/img/logo-cream.png" alt="Smile Bar" width="560" height="232"></h1>
         <p class="hero__sub" data-i18n="hero.sub">Restaurant &amp; Beach Bar</p>
+        <div class="hero__ctas">
+          <button type="button" class="pill pill--white" data-book data-i18n="cta.book">Book a table</button>
+          <a href="#menu" class="pill pill--ghost" data-i18n="cta.menu">Discover the menu</a>
+        </div>
       </div>
+      <a href="#concept" class="hero__scroll" aria-label="Scroll"><span></span></a>
       <p class="hero__corner hero__corner--l">Kamala · Phuket</p>
       <p class="hero__corner hero__corner--r" data-i18n="hero.since">Est. 2000</p>
     </section>
@@ -164,12 +172,12 @@
           </button>
         </div>
 
-        <div class="menu__tools reveal">
+        <label class="menu__search reveal">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+          <input type="search" data-i18n-ph="menu.search" placeholder="Search a dish, a drink…" aria-label="Search the menu">
+        </label>
+        <div class="menu__tools">
           <div class="menu__chips" aria-label="Sections"></div>
-          <label class="menu__search">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-            <input type="search" data-i18n-ph="menu.search" placeholder="Search a dish, a drink…" aria-label="Search the menu">
-          </label>
         </div>
 
         <div class="menu__cols"></div>
@@ -254,14 +262,14 @@
         </header>
       </div>
       <div class="gallery__grid">
-        <button type="button" class="gallery__item g1" data-lightbox="assets/img/gallery-1.jpg"><img src="assets/img/gallery-1.jpg" alt="Seared duck breast with saffron sauce" loading="lazy"></button>
-        <button type="button" class="gallery__item g2" data-lightbox="assets/img/gallery-2.jpg"><img src="assets/img/gallery-2.jpg" alt="Grilled tiger prawn with massaman sauce" loading="lazy"></button>
-        <button type="button" class="gallery__item g3" data-lightbox="assets/img/dish-3.jpg"><img src="assets/img/dish-3.jpg" alt="Sea bass steak with vegetables" loading="lazy"></button>
-        <button type="button" class="gallery__item g4" data-lightbox="assets/img/gallery-3.jpg"><img src="assets/img/gallery-3.jpg" alt="Riceberry salad bowl" loading="lazy"></button>
-        <button type="button" class="gallery__item g5" data-lightbox="assets/img/dish-4.jpg"><img src="assets/img/dish-4.jpg" alt="Mediterranean sea bass" loading="lazy"></button>
-        <button type="button" class="gallery__item g6" data-lightbox="assets/img/pina-colada.jpg"><img src="assets/img/pina-colada.jpg" alt="Piña colada" loading="lazy"></button>
-        <button type="button" class="gallery__item g7" data-lightbox="assets/img/fruit-plate.jpg"><img src="assets/img/fruit-plate.jpg" alt="Seasonal fruit plate" loading="lazy"></button>
-        <button type="button" class="gallery__item g8" data-lightbox="assets/img/gallery-4.jpg"><img src="assets/img/gallery-4.jpg" alt="Smile Bar fries" loading="lazy"></button>
+        <button type="button" class="gallery__item " data-lightbox="assets/img/gallery-1.jpg"><img src="assets/img/gallery-1.jpg" alt="Seared duck breast with saffron sauce" loading="lazy"></button>
+        <button type="button" class="gallery__item " data-lightbox="assets/img/gallery-2.jpg"><img src="assets/img/gallery-2.jpg" alt="Grilled tiger prawn with massaman sauce" loading="lazy"></button>
+        <button type="button" class="gallery__item " data-lightbox="assets/img/dish-3.jpg"><img src="assets/img/dish-3.jpg" alt="Sea bass steak with vegetables" loading="lazy"></button>
+        <button type="button" class="gallery__item " data-lightbox="assets/img/gallery-3.jpg"><img src="assets/img/gallery-3.jpg" alt="Riceberry salad bowl" loading="lazy"></button>
+        <button type="button" class="gallery__item " data-lightbox="assets/img/dish-4.jpg"><img src="assets/img/dish-4.jpg" alt="Mediterranean sea bass" loading="lazy"></button>
+        <button type="button" class="gallery__item " data-lightbox="assets/img/pina-colada.jpg"><img src="assets/img/pina-colada.jpg" alt="Piña colada" loading="lazy"></button>
+        <button type="button" class="gallery__item " data-lightbox="assets/img/fruit-plate.jpg"><img src="assets/img/fruit-plate.jpg" alt="Seasonal fruit plate" loading="lazy"></button>
+        <button type="button" class="gallery__item " data-lightbox="assets/img/gallery-4.jpg"><img src="assets/img/gallery-4.jpg" alt="Smile Bar fries" loading="lazy"></button>
       </div>
     </section>
 
@@ -309,6 +317,10 @@
   <!-- ============ FOOTER ============ -->
   <footer class="footer" id="infos">
     <div class="container">
+      <div class="footer__map">
+        <iframe title="Map — Smile Bar, Kamala Beach" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=Smile+Bar+Kamala+Beach+Phuket&amp;z=16&amp;output=embed"></iframe>
+        <a class="pill pill--white footer__map-btn" href="https://www.google.com/maps/dir/?api=1&amp;destination=Smile+Bar+Kamala+Beach+Phuket" target="_blank" rel="noopener" data-i18n="ft.directions">Get directions</a>
+      </div>
       <div class="footer__grid">
         <div class="footer__brand">
           <img src="assets/img/logo-ink.png" alt="Smile Bar" width="160" height="66" loading="lazy">

@@ -5,7 +5,7 @@ Redesign of smilebarphuket.com: a static site (HTML/CSS/JS, no build step).
 - `index.html` — the page
 - `assets/css/style.css` — styles
 - `assets/js/menu.js` — full menu with prices, transcribed from the official menu (edit here to update dishes/prices)
-- `assets/js/i18n.js` — English / French texts
+- `assets/js/i18n.js` — English / Russian / Thai texts
 - `assets/js/app.js` — interactions and the booking flow
 - `assets/img/` — photos from the restaurant's site and menu
 
