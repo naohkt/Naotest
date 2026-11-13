@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Espace restaurant</title>
+  <link rel="icon" href="/icon.svg">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 10px 0; }
+    .tabs button { flex: 1; padding: 10px 8px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font: inherit; font-weight: 600; white-space: nowrap; cursor: pointer; }
+    .tabs button.active { background: var(--c); color: #fff; border-color: var(--c); }
+    .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+    .stat b { display: block; font-size: 1.6rem; color: var(--c); }
+    .stat span { color: var(--muted); font-size: .85rem; }
+    video { width: 100%; border-radius: 12px; background: #000; }
+    .inline { display: flex; gap: 8px; } .inline input { margin: 0; } .inline .btn { width: auto; white-space: nowrap; }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .actions .big { grid-column: 1 / -1; font-size: 1.2rem; padding: 18px; }
+    .list { list-style: none; padding: 0; margin: 0; }
+    .list li { display: flex; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+    .list small { color: var(--muted); }
+    .flash { padding: 10px 14px; border-radius: 10px; background: #1e7d3b; color: #fff; margin: 10px 0; }
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <header class="brand"><h1 id="resto">Espace restaurant</h1><p class="muted">Gestion de la fidélité</p></header>
+
+  <section id="login" class="panel">
+    <form id="loginForm">
+      <label>Mot de passe <input type="password" name="pw" required autocomplete="current-password"></label>
+      <button class="btn primary">Se connecter</button>
+    </form>
+  </section>
+
+  <div id="app" hidden>
+    <div class="stats" id="stats"></div>
+    <nav class="tabs">
+      <button data-tab="scan" class="active">📷 Caisse</button>
+      <button data-tab="notify">🔔 Notifier</button>
+      <button data-tab="clients">👥 Clients</button>
+      <button data-tab="settings">⚙️ Réglages</button>
+    </nav>
+
+    <section data-panel="scan">
+      <div class="panel">
+        <button id="camBtn" class="btn primary">📷 Scanner la carte du client</button>
+        <video id="video" playsinline muted hidden></video>
+        <p class="muted center" style="margin:12px 0 6px">ou saisir le code affiché sur sa carte</p>
+        <form id="codeForm" class="inline">
+          <input name="code" placeholder="ex. K7PM2Q" maxlength="10" autocapitalize="characters" autocomplete="off">
+          <button class="btn">OK</button>
+        </form>
+      </div>
+      <div id="current" class="panel" hidden></div>
+    </section>
+
+    <section data-panel="notify" hidden>
+      <div class="panel">
+        <h2>Envoyer une notification à tous vos clients</h2>
+        <p class="muted" id="subCount"></p>
+        <p class="muted" style="font-size:.9rem">Les clients reçoivent aussi automatiquement une notification quand ils gagnent des points.</p>
+        <form id="notifyForm">
+          <label>Titre <input name="title" required maxlength="80" placeholder="Ce soir : happy hour 🍹"></label>
+          <label>Message <textarea name="body" required maxlength="300" rows="3" placeholder="-20% sur les cocktails de 18h à 20h. On vous attend !"></textarea></label>
+          <button class="btn primary">Envoyer</button>
+        </form>
+        <div id="notifyResult"></div>
+      </div>
+    </section>
+
+    <section data-panel="clients" hidden>
+      <div class="panel">
+        <input id="search" placeholder="Rechercher (prénom, code, téléphone)">
+        <ul id="clientList" class="list"></ul>
+      </div>
+    </section>
+
+    <section data-panel="settings" hidden>
+      <form id="settingsForm" class="panel">
+        <label>Nom du restaurant <input name="restaurantName" required></label>
+        <div class="actions" style="margin:0">
+          <label>Montant pour 1 point <input name="amountPerPoint" type="number" min="0.01" step="any" required></label>
+          <label>Monnaie <input name="currency" required maxlength="5"></label>
+        </div>
+        <label>Points nécessaires pour la récompense <input name="rewardPoints" type="number" min="1" required></label>
+        <label>Récompense <input name="rewardText" required></label>
+        <label>Message d'accueil <textarea name="welcomeText" rows="2"></textarea></label>
+        <label>Couleur <input name="color" type="color" style="height:48px"></label>
+        <button class="btn primary">Enregistrer</button>
+        <div id="settingsResult"></div>
+      </form>
+      <div class="panel">
+        <h2>🖨️ Affiche avec le QR code</h2>
+        <p class="muted">À imprimer et poser sur les tables / au comptoir.</p>
+        <a class="btn" href="/affiche" target="_blank" style="text-align:center;text-decoration:none">Ouvrir l'affiche</a>
+      </div>
+      <button id="logout" class="btn">Se déconnecter</button>
+    </section>
+  </div>
+  <p id="error" class="error" hidden></p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script src="/admin.js"></script>
+</body>
+</html>
