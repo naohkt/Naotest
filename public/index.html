@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Carte de fidélité</title>
+  <link rel="manifest" id="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/icon-180.png">
+  <link rel="icon" href="/icon.svg">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#c0392b">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="wrap">
+    <header class="brand">
+      <h1 id="resto">…</h1>
+      <p class="muted">Carte de fidélité</p>
+    </header>
+
+    <!-- Inscription -->
+    <section id="signup" class="panel" hidden>
+      <p id="welcome" class="lead"></p>
+      <p class="rule"><strong id="rule"></strong></p>
+      <form id="signupForm">
+        <label>Votre prénom
+          <input name="name" required maxlength="60" autocomplete="given-name" placeholder="ex. Camille">
+        </label>
+        <label>Téléphone <span class="muted">(facultatif)</span>
+          <input name="phone" type="tel" maxlength="30" autocomplete="tel" placeholder="06 12 34 56 78">
+        </label>
+        <button type="submit" class="btn primary">Créer ma carte</button>
+      </form>
+    </section>
+
+    <!-- Carte -->
+    <section id="card" hidden>
+      <div class="loyalty">
+        <div class="row"><span>Bonjour <strong id="cName"></strong> 👋</span><span class="code" id="cCode"></span></div>
+        <div id="stamps" class="stamps"></div>
+        <p id="progress" class="progress"></p>
+        <div id="rewardBox" class="reward" hidden></div>
+      </div>
+
+      <div class="panel center">
+        <p class="muted">À chaque visite, montrez ce QR code en caisse</p>
+        <img id="qr" class="qr" alt="QR code de votre carte">
+      </div>
+
+      <div id="notifPanel" class="panel">
+        <h2>🔔 Notifications</h2>
+        <p id="notifText" class="muted">Recevez vos récompenses et nos offres directement sur votre téléphone.</p>
+        <button id="notifBtn" class="btn primary">Activer les notifications</button>
+      </div>
+
+      <div id="iosHelp" class="panel" hidden>
+        <h2>📲 Sur iPhone</h2>
+        <p>Pour recevoir les notifications, ajoutez d'abord la carte à votre écran d'accueil :</p>
+        <ol>
+          <li>Touchez le bouton <strong>Partager</strong> <span aria-hidden="true">⬆️</span> en bas de Safari</li>
+          <li>Choisissez <strong>« Sur l'écran d'accueil »</strong></li>
+          <li>Ouvrez la carte depuis la nouvelle icône, puis activez les notifications</li>
+        </ol>
+      </div>
+
+      <div id="installPanel" class="panel" hidden>
+        <button id="installBtn" class="btn">📲 Ajouter à l'écran d'accueil</button>
+      </div>
+    </section>
+
+    <p id="error" class="error" hidden></p>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>

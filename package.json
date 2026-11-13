@@ -1,0 +1,27 @@
+{
+  "name": "carte-fidelite",
+  "version": "1.0.0",
+  "description": "Carte de fidélité restaurant avec QR code et notifications push",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/naohkt/Naotest.git"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/naohkt/Naotest/issues"
+  },
+  "homepage": "https://github.com/naohkt/Naotest#readme",
+  "dependencies": {
+    "express": "^4.22.3",
+    "qrcode": "^1.5.4",
+    "web-push": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "private": true
+}
