@@ -18,6 +18,9 @@
     bookingEndpoint: "",
     firstSeating: 11 * 60, lastSeating: 22 * 60 + 30, step: 30,
     maxGuests: 19, daysAhead: 120,
+    // Fire Show nights (0 = Sunday … 6 = Saturday): no reservations between
+    // 17:30 and 21:30, walk-in guests only.
+    fireShow: { days: [5, 6], from: 17 * 60 + 30, to: 21 * 60 + 30 },
     nye: { date: "2026-12-31", midnight: Date.UTC(2026, 11, 31, 17, 0) }, // 1 Jan 2027 00:00 Phuket
   };
 
@@ -313,12 +316,17 @@
     st: { guests: 2, date: null, time: null },
     month: null, preset: null, opener: null, last: null,
 
+    // Every seating time still ahead on that date (bookable or walk-in only).
     slots(date) {
       const n = now(), isToday = date === today(), out = [];
       for (let m = CONFIG.firstSeating; m <= CONFIG.lastSeating; m += CONFIG.step) if (!(isToday && m < n.mins + 30)) out.push(m);
       return out;
     },
-    first() { return this.slots(today()).length ? today() : addDays(today(), 1); },
+    isFireNight(date) { return CONFIG.fireShow.days.includes(dow(date)); },
+    // Fri & Sat 17:30–21:30: no reservations (Fire Show), walk-in only.
+    isBlocked(date, m) { return this.isFireNight(date) && m >= CONFIG.fireShow.from && m < CONFIG.fireShow.to; },
+    bookable(date) { return this.slots(date).filter((m) => !this.isBlocked(date, m)); },
+    first() { return this.bookable(today()).length ? today() : addDays(today(), 1); },
 
     open(preset, opener) {
       this.opener = opener; this.preset = preset || null;
@@ -384,23 +392,27 @@
     },
 
     renderSlots() {
-      const st = this.st, list = this.slots(st.date);
+      const st = this.st, list = this.slots(st.date), open = this.bookable(st.date);
       $("[data-summary-date]").textContent = `${fmtDate(st.date)} · ${guestsLabel(st.guests)}`;
-      if (!list.length) { $(".slots").innerHTML = `<p class="mute">${esc(t("bk.noSlots"))}</p>`; return; }
+      $("[data-fire-note]").hidden = !this.isFireNight(st.date);
+      if (!open.length) { st.time = null; $(".slots").innerHTML = `<p class="mute">${esc(t("bk.noSlots"))}</p>`; return; }
       const ss = sunset(st.date) - 45;
-      const sunsetSlot = list.reduce((b, x) => (Math.abs(x - ss) < Math.abs(b - ss) ? x : b), list[0]);
-      if (this.preset === "nye" && st.time == null && list.includes(20 * 60)) st.time = 20 * 60;
-      if (st.time != null && !list.includes(st.time)) st.time = null;
+      const sunsetSlot = open.reduce((b, x) => (Math.abs(x - ss) < Math.abs(b - ss) ? x : b), open[0]);
+      if (this.preset === "nye" && st.time == null && open.includes(20 * 60)) st.time = 20 * 60;
+      if (st.time != null && !open.includes(st.time)) st.time = null;
       const groups = [["slot.lunch", (x) => x < 15 * 60], ["slot.afternoon", (x) => x >= 15 * 60 && x < 19 * 60], ["slot.dinner", (x) => x >= 19 * 60]];
       $(".slots").innerHTML = groups.map(([k, f]) => {
         const g = list.filter(f); if (!g.length) return "";
-        return `<div><h4>${esc(t(k))}</h4><div class="slots__row">${g.map((x) => `<button type="button" class="slot ${st.time === x ? "is-selected" : ""}" data-time="${x}" aria-pressed="${st.time === x}">${fmtTime(x)}${x === sunsetSlot ? `<span class="slot__badge">${esc(t("slot.sunset"))}</span>` : ""}</button>`).join("")}</div></div>`;
+        return `<div><h4>${esc(t(k))}</h4><div class="slots__row">${g.map((x) => {
+          if (this.isBlocked(st.date, x)) return `<button type="button" class="slot is-walkin" disabled aria-label="${fmtTime(x)} — ${esc(t("slot.walkin"))}">${fmtTime(x)}<span class="slot__badge slot__badge--walkin">${esc(t("slot.walkin"))}</span></button>`;
+          return `<button type="button" class="slot ${st.time === x ? "is-selected" : ""}" data-time="${x}" aria-pressed="${st.time === x}">${fmtTime(x)}${x === sunsetSlot ? `<span class="slot__badge">${esc(t("slot.sunset"))}</span>` : ""}</button>`;
+        }).join("")}</div></div>`;
       }).join("");
     },
 
     data() {
       const fd = new FormData(this.form);
-      return { ...this.st, zone: fd.get("zone") || "any", name: (fd.get("name") || "").trim(), phone: (fd.get("phone") || "").trim(), email: (fd.get("email") || "").trim(), occasion: fd.get("occasion") || "none", notes: (fd.get("notes") || "").trim() };
+      return { ...this.st, name: (fd.get("name") || "").trim(), phone: (fd.get("phone") || "").trim(), email: (fd.get("email") || "").trim(), occasion: fd.get("occasion") || "none", notes: (fd.get("notes") || "").trim() };
     },
     validate() {
       const d = this.data();
@@ -418,16 +430,17 @@
     ticket(d, ref) {
       const rows = [];
       if (ref) rows.push([t("t.ref"), ref, "ref"]);
-      rows.push([t("t.date"), fmtDate(d.date)], [t("t.time"), fmtTime(d.time)], [t("t.guests"), guestsLabel(d.guests)], [t("t.seating"), t(d.zone === "beach" ? "z.beach" : "z.any")], [t("t.name"), d.name]);
+      rows.push([t("t.date"), fmtDate(d.date)], [t("t.time"), fmtTime(d.time)], [t("t.guests"), guestsLabel(d.guests)], [t("t.name"), d.name]);
       if (d.occasion !== "none") rows.push([t("t.occasion"), t("o." + d.occasion)]);
       if (d.notes) rows.push([t("t.notes"), d.notes]);
       return `<dl>${rows.map(([k, v, c]) => `<div class="ticket__row"><dt>${esc(k)}</dt><dd class="${c || ""}">${esc(v)}</dd></div>`).join("")}</dl>`;
     },
     message(b) {
-      const lines = [tEn("wa.booking"), "", `Reference: ${b.ref}`, `Date: ${fmtDate(b.date, undefined, "en-GB")}`, `Time: ${fmtTime(b.time)}`, `Guests: ${b.guests}`, `Seating: ${tEn(b.zone === "beach" ? "z.beach" : "z.any")}`, `Name: ${b.name}`, `Tel: ${b.phone}`, `Email: ${b.email}`];
+      const lines = [tEn("wa.booking"), "", `Reference: ${b.ref}`, `Date: ${fmtDate(b.date, undefined, "en-GB")}`, `Time: ${fmtTime(b.time)}`, `Guests: ${b.guests}`, `Name: ${b.name}`, `Tel: ${b.phone}`, `Email: ${b.email}`];
       if (b.occasion !== "none") lines.push(`Occasion: ${tEn("o." + b.occasion)}`);
       if (b.notes) lines.push(`Requests: ${b.notes}`);
       lines.push(`Guest language: ${String(b.lang).toUpperCase()}`);
+      lines.push("", "I understand the reservation is confirmed once the deposit is paid. Please send me the deposit details.");
       return lines.join("\n");
     },
     done(b) {
