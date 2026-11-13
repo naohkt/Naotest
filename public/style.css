@@ -23,11 +23,11 @@ input, textarea, select { width: 100%; margin-top: 6px; padding: 12px; font: inh
 .loyalty { background: var(--c); color: #fff; border-radius: 20px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,.15); }
 .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .code { font-family: ui-monospace, monospace; background: rgba(255,255,255,.2); padding: 2px 8px; border-radius: 6px; letter-spacing: 1px; }
-.stamps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 18px 0 10px; }
-.stamp { aspect-ratio: 1; border-radius: 50%; border: 2px dashed rgba(255,255,255,.6); display: grid; place-items: center; font-size: 1.3rem; }
-.stamp.on { background: #fff; border-style: solid; border-color: #fff; color: var(--c); animation: pop .35s ease; }
-.stamp.last { border-color: #ffd36b; }
-@keyframes pop { from { transform: scale(.4); } to { transform: scale(1); } }
+.points { text-align: center; margin: 14px 0 8px; }
+.points span { display: block; font-size: 4rem; font-weight: 800; line-height: 1; }
+.points small { font-size: 1rem; opacity: .85; }
+.bar { height: 12px; background: rgba(255,255,255,.3); border-radius: 99px; overflow: hidden; margin: 10px 0; }
+.bar div { height: 100%; width: 0; background: #fff; border-radius: 99px; transition: width .6s ease; }
 .progress { margin: 4px 0 0; text-align: center; font-weight: 600; }
 .reward { margin-top: 14px; background: #fff; color: var(--c); border-radius: 12px; padding: 12px; text-align: center; font-weight: 700; }
 .qr { width: 200px; height: 200px; background: #fff; padding: 8px; border-radius: 12px; }

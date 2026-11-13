@@ -3,16 +3,18 @@
 Une web-app (PWA) pour restaurant : **pas besoin de l'App Store ni du Play Store**.
 
 1. Le client **scanne le QR code** posé sur la table.
-2. Il tape son prénom → il a **sa carte de fidélité** sur son téléphone (avec tampons).
-3. Il active les **notifications** → il est prévenu quand il gagne une récompense, et reçoit vos offres.
-4. En caisse, vous **scannez le QR de sa carte** (ou tapez son code à 6 lettres) → **+1 tampon**.
+2. Il tape son prénom → il a **sa carte de fidélité** sur son téléphone.
+3. Il active les **notifications** → il est prévenu quand il gagne des points, et reçoit vos offres.
+4. En caisse, vous **scannez le QR de sa carte** (ou tapez son code à 6 lettres), vous tapez **le montant de l'addition** → les points sont ajoutés automatiquement.
+
+**Règle par défaut : 10 ฿ dépensés = 1 point, 100 points = un plat offert** (tout est modifiable dans Réglages).
 
 ## Les pages
 
 | Adresse | Pour qui | Rôle |
 |---|---|---|
 | `/` | Clients | Créer / voir sa carte, activer les notifications |
-| `/admin` | Vous | Scanner les cartes, ajouter des tampons, donner les récompenses, envoyer des notifications, liste clients, réglages |
+| `/admin` | Vous | Scanner les cartes, ajouter des points, donner les récompenses, envoyer des notifications, liste clients, réglages |
 | `/affiche` | Vous | Affiche à imprimer avec le QR code du restaurant |
 
 ## Lancer en local
@@ -46,7 +48,7 @@ Variables d'environnement :
 
 - **Android (Chrome, Samsung…)** : marche directement depuis le navigateur.
 - **iPhone (iOS 16.4+)** : Apple impose d'**ajouter la carte à l'écran d'accueil** d'abord (Partager → « Sur l'écran d'accueil »). La page l'explique automatiquement aux utilisateurs d'iPhone.
-- Notifications automatiques : à chaque tampon (« plus que X visites ») et quand une récompense est gagnée.
+- Notifications automatiques : à chaque achat (« +35 points, vous avez maintenant 120 points ») et quand une récompense est gagnée.
 - Notifications manuelles : onglet **Notifier** de `/admin` (ex. « Ce soir, happy hour 🍹 »).
 
 ## Technique

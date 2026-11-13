@@ -22,9 +22,6 @@
     .list li { display: flex; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
     .list small { color: var(--muted); }
     .flash { padding: 10px 14px; border-radius: 10px; background: #1e7d3b; color: #fff; margin: 10px 0; }
-    .mini-stamps { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0; }
-    .mini-stamps i { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--c); }
-    .mini-stamps i.on { background: var(--c); }
   </style>
 </head>
 <body>
@@ -64,6 +61,7 @@
       <div class="panel">
         <h2>Envoyer une notification à tous vos clients</h2>
         <p class="muted" id="subCount"></p>
+        <p class="muted" style="font-size:.9rem">Les clients reçoivent aussi automatiquement une notification quand ils gagnent des points.</p>
         <form id="notifyForm">
           <label>Titre <input name="title" required maxlength="80" placeholder="Ce soir : happy hour 🍹"></label>
           <label>Message <textarea name="body" required maxlength="300" rows="3" placeholder="-20% sur les cocktails de 18h à 20h. On vous attend !"></textarea></label>
@@ -83,7 +81,11 @@
     <section data-panel="settings" hidden>
       <form id="settingsForm" class="panel">
         <label>Nom du restaurant <input name="restaurantName" required></label>
-        <label>Nombre de tampons pour une récompense <input name="stampsRequired" type="number" min="1" max="30" required></label>
+        <div class="actions" style="margin:0">
+          <label>Montant pour 1 point <input name="amountPerPoint" type="number" min="0.01" step="any" required></label>
+          <label>Monnaie <input name="currency" required maxlength="5"></label>
+        </div>
+        <label>Points nécessaires pour la récompense <input name="rewardPoints" type="number" min="1" required></label>
         <label>Récompense <input name="rewardText" required></label>
         <label>Message d'accueil <textarea name="welcomeText" rows="2"></textarea></label>
         <label>Couleur <input name="color" type="color" style="height:48px"></label>

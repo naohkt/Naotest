@@ -35,13 +35,13 @@ function applySettings() {
   $('resto').textContent = settings.restaurantName;
   document.documentElement.style.setProperty('--c', settings.color);
   const f = $('settingsForm');
-  for (const k of ['restaurantName', 'stampsRequired', 'rewardText', 'welcomeText', 'color']) f.elements[k].value = settings[k];
+  for (const k of ['restaurantName', 'amountPerPoint', 'currency', 'rewardPoints', 'rewardText', 'welcomeText', 'color']) f.elements[k].value = settings[k];
 }
 async function loadStats() {
   const s = await api('/stats');
   $('stats').innerHTML = [
     [s.cards, 'cartes créées'], [s.subscribed, 'avec notifications'],
-    [s.visitsToday, "visites aujourd'hui"], [s.rewardsRedeemed, 'récompenses utilisées'],
+    [s.visitsToday, "passages en caisse aujourd'hui"], [s.rewardsRedeemed, 'récompenses utilisées'],
   ].map(([n, l]) => `<div class="stat"><b>${n}</b><span>${l}</span></div>`).join('');
   $('subCount').textContent = `${s.subscribed} client(s) recevront la notification.`;
 }
@@ -102,29 +102,46 @@ async function openCard(code) {
 }
 
 function renderCurrent(flash = '') {
-  const c = current, n = settings.stampsRequired;
-  const dots = Array.from({ length: n }, (_, i) => `<i class="${i < c.stamps ? 'on' : ''}"></i>`).join('');
+  const c = current, goal = settings.rewardPoints;
   $('current').hidden = false;
   $('current').innerHTML = `
     ${flash ? `<div class="flash">${flash}</div>` : ''}
     <div class="row"><h2 style="margin:0">${esc(c.name)}</h2><span class="muted">${esc(c.code)}</span></div>
-    <div class="mini-stamps">${dots}</div>
-    <p style="margin:4px 0">${c.stamps} / ${n} tampons · ${c.totalVisits} visite(s) au total</p>
-    ${c.rewards > 0 ? `<p class="rule"><strong>🎁 ${c.rewards} récompense(s) disponible(s) : ${esc(settings.rewardText)}</strong></p>` : ''}
+    <p style="margin:6px 0;font-size:1.6rem;font-weight:800;color:var(--c)">${c.points} points</p>
+    <p class="muted" style="margin:0">${c.totalVisits} visite(s) · ${Math.round(c.totalSpent)} ${esc(settings.currency)} dépensés au total</p>
+    ${c.points >= goal ? `<p class="rule"><strong>🎁 A droit à : ${esc(settings.rewardText)}</strong></p>` : ''}
+    <form id="buyForm" style="margin-top:14px">
+      <label>Montant de l'addition (${esc(settings.currency)})
+        <input name="amount" type="number" inputmode="decimal" min="0" step="any" required placeholder="ex. 350">
+      </label>
+      <button class="btn primary" style="font-size:1.15rem;padding:16px" id="buyBtn">Ajouter les points</button>
+    </form>
     <div class="actions">
-      <button class="btn primary big" data-act="stamp">+1 tampon</button>
-      <button class="btn" data-act="redeem" ${c.rewards < 1 ? 'disabled' : ''}>🎁 Utiliser la récompense</button>
-      <button class="btn" data-act="unstamp" ${c.stamps < 1 ? 'disabled' : ''}>↩︎ Retirer un tampon</button>
+      <button class="btn" data-act="redeem" ${c.points < goal ? 'disabled' : ''}>🎁 Utiliser la récompense (−${goal})</button>
+      <button class="btn" data-act="adjust">✏️ Corriger les points</button>
     </div>`;
-  $('current').querySelectorAll('[data-act]').forEach((b) => b.onclick = () => act(b.dataset.act, b));
+  const amount = $('current').querySelector('input[name=amount]');
+  amount.oninput = () => {
+    const pts = Math.floor((parseFloat(amount.value) || 0) / settings.amountPerPoint + 1e-9);
+    $('buyBtn').textContent = pts > 0 ? `Ajouter ${pts} point${pts > 1 ? 's' : ''}` : 'Ajouter les points';
+  };
+  $('buyForm').onsubmit = (e) => { e.preventDefault(); act('purchase', $('buyBtn'), { amount: amount.value }); };
+  $('current').querySelector('[data-act=redeem]').onclick = (e) => {
+    if (confirm(`Utiliser la récompense de ${c.name} ? (${goal} points seront retirés)`)) act('redeem', e.target);
+  };
+  $('current').querySelector('[data-act=adjust]').onclick = (e) => {
+    const v = prompt('Combien de points ajouter ? (mettre un chiffre négatif pour retirer, ex. -5)');
+    if (v && parseInt(v, 10)) act('adjust', e.target, { delta: parseInt(v, 10) });
+  };
+  if (!flash) amount.focus();
 }
 
-async function act(action, btn) {
+async function act(action, btn, body = {}) {
   btn.disabled = true;
   try {
-    const r = await api(`/cards/${current.code}/${action}`, { method: 'POST', body: '{}' });
+    const r = await api(`/cards/${current.code}/${action}`, { method: 'POST', body: JSON.stringify(body) });
     current = { ...current, ...r };
-    const msg = { stamp: r.newRewards ? '🎉 Récompense débloquée !' : '✅ Tampon ajouté', redeem: '🎁 Récompense utilisée', unstamp: 'Tampon retiré' }[action];
+    const msg = { purchase: `✅ +${r.earned} point${r.earned > 1 ? 's' : ''}`, redeem: '🎁 Récompense utilisée', adjust: 'Points corrigés' }[action];
     renderCurrent(msg); loadStats();
   } catch (e) { showError(e.message); btn.disabled = false; }
 }
@@ -151,7 +168,7 @@ async function loadClients() {
   $('clientList').innerHTML = list.length ? list.map((c) => `
     <li data-code="${esc(c.code)}">
       <span><strong>${esc(c.name)}</strong> ${c.notifications ? '🔔' : ''}<br><small>${esc(c.code)}${c.phone ? ' · ' + esc(c.phone) : ''}</small></span>
-      <span style="text-align:right">${c.stamps}/${settings.stampsRequired}${c.rewards ? ' · 🎁' + c.rewards : ''}<br><small>${c.lastVisit ? 'vu le ' + new Date(c.lastVisit + 'Z').toLocaleDateString('fr-FR') : 'jamais venu'}</small></span>
+      <span style="text-align:right"><strong>${c.points} pts</strong>${c.points >= settings.rewardPoints ? ' 🎁' : ''}<br><small>${c.lastVisit ? 'vu le ' + new Date(c.lastVisit + 'Z').toLocaleDateString('fr-FR') : 'jamais venu'}</small></span>
     </li>`).join('') : '<li class="muted">Aucun client pour l’instant.</li>';
   $('clientList').querySelectorAll('li[data-code]').forEach((li) => li.onclick = () => {
     document.querySelector('[data-tab="scan"]').click(); openCard(li.dataset.code);

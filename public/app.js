@@ -24,7 +24,8 @@ async function init() {
   document.documentElement.style.setProperty('--c', config.color);
   $('resto').textContent = config.restaurantName;
   $('welcome').textContent = config.welcomeText;
-  $('rule').textContent = `${config.stampsRequired} visites = ${config.rewardText}`;
+  $('rule').innerHTML = '';
+  $('rule').append(`${config.amountPerPoint} ${config.currency} dépensés = 1 point`, document.createElement('br'), `${config.rewardPoints} points = ${config.rewardText}`);
 
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 
@@ -69,27 +70,19 @@ async function refresh() {
   try { card = await api(`/api/cards/${encodeURIComponent(card.id)}`); renderCard(); } catch {}
 }
 
-let lastStamps = -1;
 function renderCard() {
-  const n = config.stampsRequired;
+  const goal = config.rewardPoints;
   $('cName').textContent = card.name;
   $('cCode').textContent = card.code;
   $('qr').src = `/api/qr/${card.code}.svg`;
-  const box = $('stamps');
-  if (lastStamps !== card.stamps) {
-    box.innerHTML = '';
-    for (let i = 0; i < n; i++) {
-      const d = document.createElement('div');
-      d.className = 'stamp' + (i < card.stamps ? ' on' : '') + (i === n - 1 ? ' last' : '');
-      d.textContent = i < card.stamps ? '★' : (i === n - 1 ? '🎁' : '');
-      box.appendChild(d);
-    }
-    lastStamps = card.stamps;
-  }
-  const left = n - card.stamps;
-  $('progress').textContent = `${card.stamps} / ${n} — plus que ${left} visite${left > 1 ? 's' : ''} avant : ${config.rewardText}`;
-  $('rewardBox').hidden = card.rewards < 1;
-  $('rewardBox').textContent = `🎉 ${card.rewards > 1 ? card.rewards + ' récompenses disponibles' : 'Récompense disponible'} : ${config.rewardText} ! Montrez cette carte en caisse.`;
+  $('points').textContent = card.points;
+  $('bar').style.width = Math.min(100, (card.points / goal) * 100) + '%';
+  const left = goal - card.points;
+  $('progress').textContent = left > 0
+    ? `Plus que ${left} points avant : ${config.rewardText}`
+    : `${config.rewardText} : c'est gagné !`;
+  $('rewardBox').hidden = card.points < goal;
+  $('rewardBox').textContent = `🎉 Récompense disponible : ${config.rewardText} ! Montrez cette carte en caisse.`;
 }
 
 // ---------- Notifications ----------

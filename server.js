@@ -29,8 +29,8 @@ db.exec(`
     code TEXT UNIQUE NOT NULL,        -- code court lisible (montré / scanné en caisse)
     name TEXT NOT NULL,
     phone TEXT,
-    stamps INTEGER NOT NULL DEFAULT 0,
-    rewards INTEGER NOT NULL DEFAULT 0, -- récompenses disponibles
+    points INTEGER NOT NULL DEFAULT 0,
+    total_spent REAL NOT NULL DEFAULT 0,
     total_visits INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_visit TEXT
@@ -51,9 +51,11 @@ db.exec(`
 
 const DEFAULT_SETTINGS = {
   restaurantName: process.env.RESTAURANT_NAME || 'Mon Restaurant',
-  stampsRequired: '10',
-  rewardText: 'Un repas offert',
-  welcomeText: 'Cumulez des tampons à chaque visite et profitez de récompenses !',
+  currency: '฿',
+  amountPerPoint: '10',          // 10 ฿ dépensés = 1 point
+  rewardPoints: '100',           // points nécessaires pour la récompense
+  rewardText: 'Un plat offert',
+  welcomeText: 'Gagnez des points à chaque visite et profitez de récompenses !',
   color: '#c0392b',
 };
 const insertSetting = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)');
@@ -62,7 +64,8 @@ for (const [k, v] of Object.entries(DEFAULT_SETTINGS)) insertSetting.run(k, v);
 function getSettings() {
   const s = {};
   for (const row of db.prepare('SELECT key, value FROM settings').all()) s[row.key] = row.value;
-  s.stampsRequired = Math.max(1, parseInt(s.stampsRequired, 10) || 10);
+  s.amountPerPoint = Math.max(0.01, parseFloat(s.amountPerPoint) || 10);
+  s.rewardPoints = Math.max(1, parseInt(s.rewardPoints, 10) || 100);
   return s;
 }
 
@@ -115,7 +118,7 @@ function newCode() {
   }
 }
 const publicCard = (c) => c && ({
-  id: c.id, code: c.code, name: c.name, stamps: c.stamps, rewards: c.rewards,
+  id: c.id, code: c.code, name: c.name, points: c.points, totalSpent: c.total_spent,
   totalVisits: c.total_visits, createdAt: c.created_at, lastVisit: c.last_visit,
 });
 const logEvent = (cardId, type, detail = null) =>
@@ -210,7 +213,7 @@ small{color:#777}@media print{button{display:none}}</style></head><body>
 <h1>${esc(s.restaurantName)}</h1><h2>Votre carte de fidélité sur votre téléphone</h2>
 <div class="qr">${svg}</div>
 <p>📱 Scannez ce QR code avec l'appareil photo</p>
-<p class="r">${s.stampsRequired} visites = ${esc(s.rewardText)}</p>
+<p class="r">${esc(s.amountPerPoint)} ${esc(s.currency)} dépensés = 1 point<br>${s.rewardPoints} points = ${esc(s.rewardText)}</p>
 <small>${esc(url)}</small><br><br><button onclick="print()">Imprimer</button></body></html>`);
 });
 
@@ -229,7 +232,7 @@ admin.get('/stats', (req, res) => {
   res.json({
     cards: one('SELECT COUNT(*) FROM cards'),
     subscribed: one('SELECT COUNT(DISTINCT card_id) FROM subscriptions'),
-    visitsToday: one("SELECT COUNT(*) FROM events WHERE type = 'stamp' AND date(created_at) = date('now')"),
+    visitsToday: one("SELECT COUNT(*) FROM events WHERE type = 'purchase' AND date(created_at) = date('now')"),
     rewardsRedeemed: one("SELECT COUNT(*) FROM events WHERE type = 'redeem'"),
   });
 });
@@ -248,44 +251,46 @@ admin.get('/cards/by-code/:code', (req, res) => {
   res.json({ ...publicCard(c), phone: c.phone });
 });
 
-// Ajouter un (ou plusieurs) tampon(s)
-admin.post('/cards/:code/stamp', async (req, res) => {
+// Ajouter des points selon le montant dépensé (ex. 250 ฿ → 25 points)
+admin.post('/cards/:code/purchase', (req, res) => {
   const c = db.prepare('SELECT * FROM cards WHERE code = ?').get(req.params.code);
   if (!c) return res.status(404).json({ error: 'Carte introuvable' });
   const s = getSettings();
-  const n = Math.min(Math.max(parseInt(req.body.count, 10) || 1, 1), 20);
-  let stamps = c.stamps + n;
-  let rewards = c.rewards;
-  let newRewards = 0;
-  while (stamps >= s.stampsRequired) { stamps -= s.stampsRequired; rewards++; newRewards++; }
-  db.prepare("UPDATE cards SET stamps = ?, rewards = ?, total_visits = total_visits + 1, last_visit = datetime('now') WHERE id = ?")
-    .run(stamps, rewards, c.id);
-  logEvent(c.id, 'stamp', String(n));
+  const amount = Math.round(parseFloat(String(req.body.amount).replace(',', '.')) * 100) / 100;
+  if (!(amount > 0) || amount > 1e7) return res.status(400).json({ error: 'Montant invalide' });
+  const earned = Math.floor(amount / s.amountPerPoint + 1e-9);
+  const points = c.points + earned;
+  db.prepare("UPDATE cards SET points = ?, total_spent = total_spent + ?, total_visits = total_visits + 1, last_visit = datetime('now') WHERE id = ?")
+    .run(points, amount, c.id);
+  logEvent(c.id, 'purchase', JSON.stringify({ amount, earned }));
 
-  const remaining = s.stampsRequired - stamps;
-  const payload = newRewards
-    ? { title: '🎉 Récompense débloquée !', body: `Bravo ${c.name} ! Vous avez gagné : ${s.rewardText}. Montrez votre carte lors de votre prochaine visite.` }
-    : { title: `${s.restaurantName} – merci !`, body: `+${n} tampon${n > 1 ? 's' : ''}. Plus que ${remaining} avant : ${s.rewardText}.` };
-  pushToCard(c.id, { ...payload, url: '/' }).catch(() => {});
-  res.json({ ...publicCard(db.prepare('SELECT * FROM cards WHERE id = ?').get(c.id)), newRewards });
+  const unlocked = c.points < s.rewardPoints && points >= s.rewardPoints;
+  const payload = unlocked
+    ? { title: '🎉 Récompense débloquée !', body: `Bravo ${c.name}, vous avez ${points} points : ${s.rewardText} vous attend !` }
+    : { title: `${s.restaurantName} – merci !`, body: `+${earned} point${earned > 1 ? 's' : ''}. Vous avez maintenant ${points} points.` };
+  if (earned > 0) pushToCard(c.id, { ...payload, url: '/' }).catch(() => {});
+  res.json({ ...publicCard(db.prepare('SELECT * FROM cards WHERE id = ?').get(c.id)), earned });
 });
 
-// Utiliser une récompense
+// Utiliser la récompense (retire les points correspondants)
 admin.post('/cards/:code/redeem', (req, res) => {
   const c = db.prepare('SELECT * FROM cards WHERE code = ?').get(req.params.code);
   if (!c) return res.status(404).json({ error: 'Carte introuvable' });
-  if (c.rewards < 1) return res.status(400).json({ error: 'Aucune récompense disponible' });
-  db.prepare('UPDATE cards SET rewards = rewards - 1 WHERE id = ?').run(c.id);
+  const s = getSettings();
+  if (c.points < s.rewardPoints) return res.status(400).json({ error: `Il faut ${s.rewardPoints} points` });
+  db.prepare('UPDATE cards SET points = points - ? WHERE id = ?').run(s.rewardPoints, c.id);
   logEvent(c.id, 'redeem');
   res.json(publicCard(db.prepare('SELECT * FROM cards WHERE id = ?').get(c.id)));
 });
 
-// Retirer un tampon (erreur de saisie)
-admin.post('/cards/:code/unstamp', (req, res) => {
+// Corriger les points à la main (erreur de saisie)
+admin.post('/cards/:code/adjust', (req, res) => {
   const c = db.prepare('SELECT * FROM cards WHERE code = ?').get(req.params.code);
   if (!c) return res.status(404).json({ error: 'Carte introuvable' });
-  if (c.stamps > 0) db.prepare('UPDATE cards SET stamps = stamps - 1 WHERE id = ?').run(c.id);
-  logEvent(c.id, 'unstamp');
+  const delta = parseInt(req.body.delta, 10);
+  if (!Number.isFinite(delta) || delta === 0) return res.status(400).json({ error: 'Nombre invalide' });
+  db.prepare('UPDATE cards SET points = MAX(0, points + ?) WHERE id = ?').run(delta, c.id);
+  logEvent(c.id, 'adjust', String(delta));
   res.json(publicCard(db.prepare('SELECT * FROM cards WHERE id = ?').get(c.id)));
 });
 
